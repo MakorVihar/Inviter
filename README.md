@@ -4,8 +4,7 @@ A [Dalamud](https://dalamud.dev) plugin that automatically invites players who s
 
 This is a fork of [Bluefissure/Inviter](https://github.com/Bluefissure/Inviter), updated to target the current Dalamud API and extended with a server info bar toggle, a right-click quick menu, and channel filter shortcuts.
 
-<!-- TODO: replace with a real screenshot of the settings window -->
-![Settings window](images/screenshot-settings.png)
+![Settings window](images/settings_window.jpg)
 
 ## Features
 
@@ -15,11 +14,9 @@ This is a fork of [Bluefissure/Inviter](https://github.com/Bluefissure/Inviter),
   - **Left-click** the entry to toggle auto-invite on/off
   - **Right-click** the entry for a quick menu: turn on/off, start a timed session (with duration presets or a custom minutes/attempts input), cancel a running timed session, or open settings
 
-<!-- TODO: replace with a real screenshot of the server info bar entry -->
-![Server info bar entry](images/screenshot-dtr.png)
+![Server info bar entry](images/server_info_bar_entry.jpg)
 
-<!-- TODO: replace with a real screenshot of the right-click menu -->
-![Right-click menu](images/screenshot-dtr-menu.png)
+![Right-click menu](images/right_click_menu.jpg)
 
 ## Commands
 
@@ -42,10 +39,6 @@ https://raw.githubusercontent.com/MakorVihar/Inviter/main/repo.json
 ```
 
 Then find "Inviter" under **Plugin Installer → All Plugins** and install it. See [PUBLISHING.md](PUBLISHING.md) if you're setting this repository up yourself.
-
-## Known bugs
-
-~~The plugin won't auto disable itself after the party is full, due to the [null PartyList](https://github.com/goatcorp/Dalamud/blob/3bfd6740d5c5e529b6b0d2f1cbd17fcc3c628588/Dalamud/Game/ClientState/PartyList.cs#L32) in Dalamud.~~ (Fixed since [v1.0.1.0](https://github.com/Bluefissure/Inviter/releases/tag/v1.0.1.0))
 
 ## Credits
 

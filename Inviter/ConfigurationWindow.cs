@@ -37,7 +37,10 @@ namespace Inviter
         private void DrawGeneralSettings()
         {
             if (ImGui.Checkbox(Inviter.Plugin.localizer.Localize("Enable"), ref Inviter.Plugin.Config.Enable))
+            {
                 Inviter.Plugin.Config.Save();
+                Inviter.Plugin.UpdateDtrBar();
+            }
             if (Inviter.Plugin.Config.ShowTooltips && ImGui.IsItemHovered())
                 ImGui.SetTooltip(Inviter.Plugin.localizer.Localize("Automatically invite people to your party (doesn't work for CWLS)."));
 
@@ -119,7 +122,7 @@ namespace Inviter
         // Channels that carry a XivChatTypeInfoAttribute but whose messages don't come from
         // another player you could invite: system broadcasts, or Echo, which only you can see
         // (so matching it would just mean inviting yourself).
-        private static readonly XivChatType[] NotAPlayerMessageType =
+        private static readonly XivChatType[] NotAPlayerMessageTypes =
         [
             XivChatType.Urgent,
             XivChatType.Notice,
@@ -139,7 +142,7 @@ namespace Inviter
                 .Where(c => c.GetDetails() is not null)
                 .Where(c => !c.IsUsedByGm())
                 .Except(AlreadyGroupedTypes)
-                .Except(NotAPlayerMessageType)
+                .Except(NotAPlayerMessageTypes)
         ];
 
         private static void DrawFilters()
