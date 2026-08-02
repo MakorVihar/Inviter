@@ -275,35 +275,43 @@ namespace Inviter
                         var playerName = playerPayload.PlayerName;
                         var worldRowId = playerPayload.World.RowId;
 
-                        _ = Task.Run(async () =>
-                        {
-                            // Waiting is fine off the main thread — this part is genuinely just idle time.
-                            await Task.Delay(Math.Max(0, Config.Delay));
-
-                            // The actual invite call touches live FFXIVClientStructs memory, which is
-                            // only safe from the game's own thread, so hop back for just this part.
-                            // Per Dalamud's docs this needs to be the last thing in the delegate: any
-                            // code after an `await` inside RunOnFrameworkThread() would run back on the
-                            // thread pool, not the framework thread.
-                            await Svc.Framework.RunOnFrameworkThread(() =>
-                            {
-                                unsafe
-                                {
-                                    if (invitable)
-                                    {
-                                        InfoProxyPartyInvite.Instance()->InviteToPartyInInstanceByContentId(contentId);
-                                    }
-                                    else
-                                    {
-                                        fixed (byte* namePtr = ToTerminatedBytes(playerName))
-                                            InfoProxyPartyInvite.Instance()->InviteToParty(contentId, namePtr, (ushort)worldRowId);
-                                    }
-                                }
-                            });
-                        });
+                        // Dispatched to a separate (non-unsafe) method: `await` isn't allowed inside
+                        // a block lexically nested in an unsafe context, and MsgHookDetour is unsafe.
+                        _ = SendInviteAsync(contentId, invitable, playerName, worldRowId);
                     }
                 }
             }
+        }
+
+        /// <summary>
+        /// Waits Config.Delay off the main thread, then hops onto the framework thread
+        /// (the only thread it's safe to touch FFXIVClientStructs game memory from) to
+        /// actually send the invite. Deliberately not `unsafe` at the method level so it's
+        /// allowed to `await` — only the synchronous callback passed to
+        /// RunOnFrameworkThread, which has no `await` in it, is marked unsafe.
+        /// </summary>
+        private async Task SendInviteAsync(ulong contentId, bool invitable, string playerName, uint worldRowId)
+        {
+            await Task.Delay(Math.Max(0, Config.Delay));
+
+            // Per Dalamud's docs this needs to be the last thing in the delegate: any code
+            // after an `await` inside RunOnFrameworkThread() would run back on the thread
+            // pool, not the framework thread.
+            await Svc.Framework.RunOnFrameworkThread(() =>
+            {
+                unsafe
+                {
+                    if (invitable)
+                    {
+                        InfoProxyPartyInvite.Instance()->InviteToPartyInInstanceByContentId(contentId);
+                    }
+                    else
+                    {
+                        fixed (byte* namePtr = ToTerminatedBytes(playerName))
+                            InfoProxyPartyInvite.Instance()->InviteToParty(contentId, namePtr, (ushort)worldRowId);
+                    }
+                }
+            });
         }
 
         public unsafe void CommandHandler(string command, string arguments)
