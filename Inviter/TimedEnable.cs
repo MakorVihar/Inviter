@@ -105,12 +105,6 @@ namespace Inviter
 
         void ProcessCommandTimedEnable(uint timeInMinutes, uint limit)
         {
-            if (Inviter.Plugin.Config.Enable && !isRunning)
-            {
-                Svc.Toasts.ShowError(Inviter.Plugin.localizer.Localize("Can't start timed recruitment because Inviter is turned on permanently"));
-                return;
-            }
-
             try
             {
                 if (timeInMinutes == 0)
