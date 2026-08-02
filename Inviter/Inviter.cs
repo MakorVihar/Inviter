@@ -1,6 +1,8 @@
 ﻿using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.Command;
+using Dalamud.Game.Gui.Dtr;
 using Dalamud.Game.Gui.Toast;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
@@ -14,6 +16,7 @@ using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using Lumina.Excel.Sheets;
 using System;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -22,7 +25,7 @@ namespace Inviter
 {
     public class Inviter : IDalamudPlugin
     {
-        public static Inviter Plugin;
+        public static Inviter Plugin = null!;
         public Configuration Config { get; private set; }
         public Localizer localizer;
         public TimedEnable timedRecruitment;
@@ -31,6 +34,12 @@ namespace Inviter
 
         private long NextInviteAt = 0;
         private readonly Hook<RaptureLogModule.Delegates.AddMsgSourceEntry> MsgHook;
+
+        private IDtrBarEntry? DtrEntry;
+        private bool _openDtrMenu;
+        private Vector2 _dtrMenuPos;
+        private int _customMinutes = 15;
+        private int _customAttempts = 0;
 
         public unsafe Inviter(IDalamudPluginInterface PluginInterface)
         {
@@ -53,20 +62,118 @@ namespace Inviter
             ConfigurationWindow = new();
             WindowSystem.AddWindow(ConfigurationWindow);
             Svc.PluginInterface.UiBuilder.Draw += WindowSystem.Draw;
+            Svc.PluginInterface.UiBuilder.Draw += DrawDtrMenu;
             Svc.PluginInterface.UiBuilder.OpenMainUi += ConfigurationWindow.Toggle;
             Svc.PluginInterface.UiBuilder.OpenConfigUi += ConfigurationWindow.Toggle;
 
+            DtrEntry = Svc.DtrBar.Get("Inviter");
+            DtrEntry.OnClick = OnDtrClick;
+            UpdateDtrBar();
         }
 
         public void Dispose()
         {
             timedRecruitment.FinishTimer();
             MsgHook.Dispose();
+            DtrEntry?.Remove();
             Svc.PluginInterface.UiBuilder.Draw -= WindowSystem.Draw;
+            Svc.PluginInterface.UiBuilder.Draw -= DrawDtrMenu;
             Svc.PluginInterface.UiBuilder.OpenMainUi -= ConfigurationWindow.Toggle;
             Svc.PluginInterface.UiBuilder.OpenConfigUi -= ConfigurationWindow.Toggle;
             WindowSystem.RemoveAllWindows();
             Svc.Commands.RemoveHandler("/xinvite");
+        }
+
+        /// <summary>
+        /// Left-click toggles auto-invite on/off; right-click opens the quick menu.
+        /// Both are just routed through the /xinvite command parser so there is
+        /// exactly one place that implements this logic.
+        /// </summary>
+        private void OnDtrClick(DtrInteractionEvent ev)
+        {
+            if (ev.ClickType == MouseClickType.Right)
+            {
+                _dtrMenuPos = ev.Position;
+                _openDtrMenu = true;
+                return;
+            }
+
+            Svc.Commands.ProcessCommand("/xinvite toggle");
+        }
+
+        /// <summary>
+        /// Renders the DTR right-click popup. DTR click callbacks aren't guaranteed
+        /// to run inside the current ImGui frame, so OnDtrClick only sets a flag;
+        /// the actual ImGui.OpenPopup/BeginPopup pair happens here, on the Draw tick.
+        /// </summary>
+        private void DrawDtrMenu()
+        {
+            if (_openDtrMenu)
+            {
+                ImGui.OpenPopup("##InviterDtrMenu");
+                _openDtrMenu = false;
+            }
+
+            ImGui.SetNextWindowPos(_dtrMenuPos, ImGuiCond.Appearing);
+            if (!ImGui.BeginPopup("##InviterDtrMenu"))
+                return;
+
+            if (ImGui.MenuItem(Config.Enable ? localizer.Localize("Turn Off") : localizer.Localize("Turn On")))
+                Svc.Commands.ProcessCommand(Config.Enable ? "/xinvite off" : "/xinvite on");
+
+            ImGui.Separator();
+
+            foreach (var minutes in new[] { 15, 30, 60 })
+            {
+                if (ImGui.MenuItem(string.Format(localizer.Localize("Enable for {0} minutes"), minutes)))
+                    Svc.Commands.ProcessCommand($"/xinvite {minutes}");
+            }
+
+            ImGui.Separator();
+            ImGui.TextUnformatted(localizer.Localize("Custom:"));
+            ImGui.SetNextItemWidth(70);
+            ImGui.InputInt(localizer.Localize("min") + "##dtrCustomMinutes", ref _customMinutes, 0, 0);
+            ImGui.SetNextItemWidth(70);
+            ImGui.InputInt(localizer.Localize("attempts") + "##dtrCustomAttempts", ref _customAttempts, 0, 0);
+            if (ImGui.Button(localizer.Localize("Start") + "##dtrCustomStart"))
+                Svc.Commands.ProcessCommand($"/xinvite {Math.Max(0, _customMinutes)} {Math.Max(0, _customAttempts)}");
+
+            if (timedRecruitment.isRunning)
+            {
+                ImGui.Separator();
+                if (ImGui.MenuItem(localizer.Localize("Cancel timed recruitment")))
+                    Svc.Commands.ProcessCommand("/xinvite 0");
+            }
+
+            ImGui.Separator();
+            if (ImGui.MenuItem(localizer.Localize("Open Settings...")))
+                ConfigurationWindow.Toggle();
+
+            ImGui.EndPopup();
+        }
+
+        /// <summary>
+        /// Refreshes the DTR bar's visibility and status text. Called explicitly at
+        /// every point Config.Enable/ShowDtrEntry actually change, rather than on a
+        /// per-frame poll, since the plugin has no other reason to hook Framework.Update.
+        /// </summary>
+        public void UpdateDtrBar()
+        {
+            if (DtrEntry == null)
+                return;
+
+            DtrEntry.Shown = Config.ShowDtrEntry;
+
+            string status;
+            if (!Config.Enable)
+                status = localizer.Localize("Off");
+            else if (timedRecruitment.isRunning)
+                status = string.Format(localizer.Localize("Timed ({0}m)"), timedRecruitment.MinutesRemaining);
+            else
+                status = localizer.Localize("On");
+
+            DtrEntry.Text = new SeString(new TextPayload($"Inviter: {status}"));
+            DtrEntry.Tooltip = new SeString(new TextPayload(localizer.Localize("Left-click: toggle. Right-click: menu.")));
         }
 
         private unsafe void MsgHookDetour(RaptureLogModule* thisPtr, ulong contentId, ulong accountId, int messageIndex, ushort worldId, ushort chatType)
@@ -191,6 +298,7 @@ namespace Inviter
                         PlaySound = true
                     });
                 Config.Save();
+                UpdateDtrBar();
             }
             else if (args == "off")
             {
@@ -202,6 +310,7 @@ namespace Inviter
                         PlaySound = true
                     });
                 Config.Save();
+                UpdateDtrBar();
             }
             else if (args == "party")
             {
@@ -234,6 +343,7 @@ namespace Inviter
                         });
                 }
                 Config.Save();
+                UpdateDtrBar();
             }
             else if (timedRecruitment.TryProcessCommandTimedEnable(args))
             {

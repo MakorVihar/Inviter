@@ -64,7 +64,7 @@ jobs:
           $entry.AssemblyVersion = "${{ steps.locate.outputs.version }}"
           $entry.DalamudApiLevel = [int]"${{ steps.locate.outputs.api_level }}"
           $entry.LastUpdate = [string][DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
-          $json | ConvertTo-Json -Depth 5 | Set-Content repo.json
+          $json | ConvertTo-Json -Depth 5 -AsArray | Set-Content repo.json
 
       - name: Commit repo.json
         shell: pwsh

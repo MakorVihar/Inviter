@@ -45,6 +45,15 @@ namespace Inviter
             if (ImGui.Checkbox(Inviter.Plugin.localizer.Localize("Tooltips"), ref Inviter.Plugin.Config.ShowTooltips))
                 Inviter.Plugin.Config.Save();
 
+            ImGui.SameLine();
+            if (ImGui.Checkbox(Inviter.Plugin.localizer.Localize("Server Info Bar"), ref Inviter.Plugin.Config.ShowDtrEntry))
+            {
+                Inviter.Plugin.Config.Save();
+                Inviter.Plugin.UpdateDtrBar();
+            }
+            if (Inviter.Plugin.Config.ShowTooltips && ImGui.IsItemHovered())
+                ImGui.SetTooltip(Inviter.Plugin.localizer.Localize("Show an Inviter status entry in the server info bar. Left-click toggles it, right-click opens a quick menu."));
+
             ImGui.TextUnformatted(Inviter.Plugin.localizer.Localize("Language:"));
             if (Inviter.Plugin.Config.ShowTooltips && ImGui.IsItemHovered())
                 ImGui.SetTooltip(Inviter.Plugin.localizer.Localize("Change the UI Language."));
@@ -99,6 +108,25 @@ namespace Inviter
 
         private static void DrawFilters()
         {
+            if (ImGui.Button(Inviter.Plugin.localizer.Localize("All") + "##filtersAll"))
+            {
+                Inviter.Plugin.Config.FilteredChannels = [];
+                Inviter.Plugin.Config.Save();
+            }
+            if (Inviter.Plugin.Config.ShowTooltips && ImGui.IsItemHovered())
+                ImGui.SetTooltip(Inviter.Plugin.localizer.Localize("Check every channel."));
+
+            ImGui.SameLine();
+            if (ImGui.Button(Inviter.Plugin.localizer.Localize("Clear") + "##filtersClear"))
+            {
+                Inviter.Plugin.Config.FilteredChannels = [.. Enum.GetValues<XivChatType>().Where(c => !Inviter.Plugin.Config.HiddenChatType.Contains(c))];
+                Inviter.Plugin.Config.Save();
+            }
+            if (Inviter.Plugin.Config.ShowTooltips && ImGui.IsItemHovered())
+                ImGui.SetTooltip(Inviter.Plugin.localizer.Localize("Uncheck every channel."));
+
+            ImGui.Separator();
+
             ImGui.Columns(4, "FiltersTable", true);
             foreach (XivChatType chatType in Enum.GetValues<XivChatType>())
             {

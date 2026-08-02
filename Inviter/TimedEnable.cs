@@ -13,6 +13,8 @@ namespace Inviter
         internal uint MaxInvitations = 0;
         internal uint InvitationAttempts = 0;
 
+        internal double MinutesRemaining => Math.Max(0, Math.Ceiling((runUntil - Environment.TickCount64) / 60000d));
+
         internal TimedEnable() { }
 
         internal void StartTimer()
@@ -22,6 +24,7 @@ namespace Inviter
 
             isRunning = true;
             Inviter.Plugin.Config.Enable = true;
+            Inviter.Plugin.UpdateDtrBar();
             nextNotification = Environment.TickCount64 + (runUntil - Environment.TickCount64) / 2;
             timer = new Timer(TimerCallback, null, 0, 1000);
         }
@@ -37,6 +40,7 @@ namespace Inviter
                 }
 
                 long now = Environment.TickCount64;
+                Inviter.Plugin.UpdateDtrBar();
 
                 if (MaxInvitations > 0 && InvitationAttempts >= MaxInvitations)
                 {
@@ -77,6 +81,7 @@ namespace Inviter
             Inviter.Plugin.Config.Enable = false;
             Inviter.Plugin.Config.Save();
             isRunning = false;
+            Inviter.Plugin.UpdateDtrBar();
         }
 
         internal bool TryProcessCommandTimedEnable(string args)
