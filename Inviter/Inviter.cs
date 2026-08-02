@@ -188,6 +188,8 @@ namespace Inviter
                 return;
             if (Svc.Objects.LocalPlayer == null || Svc.Condition[ConditionFlag.BetweenAreas] || Svc.Condition[ConditionFlag.BetweenAreas51])
                 return;
+            if (string.IsNullOrWhiteSpace(Config.TextPattern))
+                return;
 
             if (!RaptureLogModule.Instance()->GetLogMessageDetail(messageIndex, out var sender, out var rawMessage, out _, out _, out _, out _))
             {
@@ -205,7 +207,15 @@ namespace Inviter
             {
                 try
                 {
-                    matched = Regex.Match(message, Config.TextPattern, RegexOptions.IgnoreCase).Success;
+                    // Explicit timeout: without one, a message crafted to trigger catastrophic
+                    // backtracking against the user's own pattern can hang the match indefinitely,
+                    // and that message can come from any other player on a watched channel.
+                    matched = Regex.IsMatch(message, Config.TextPattern, RegexOptions.IgnoreCase, TimeSpan.FromMilliseconds(200));
+                }
+                catch (RegexMatchTimeoutException)
+                {
+                    LogError("Skipping invite: pattern took too long to evaluate (possible catastrophic backtracking).");
+                    return;
                 }
                 catch (Exception)
                 {
@@ -257,23 +267,40 @@ namespace Inviter
                         }
                         NextInviteAt = tc64 + Config.Ratelimit;
                         Log($"Attempting to invite {playerPayload.PlayerName}");
-                        if (InInvitableInstance())
+
+                        // InInvitableInstance() reads game state, so it needs to happen here on
+                        // the framework thread (MsgHookDetour is called synchronously from the
+                        // game's own AddMsgSourceEntry call, so this line is already safe).
+                        var invitable = InInvitableInstance();
+                        var playerName = playerPayload.PlayerName;
+                        var worldRowId = playerPayload.World.RowId;
+
+                        _ = Task.Run(async () =>
                         {
-                            Task.Run(() =>
+                            // Waiting is fine off the main thread — this part is genuinely just idle time.
+                            await Task.Delay(Math.Max(0, Config.Delay));
+
+                            // The actual invite call touches live FFXIVClientStructs memory, which is
+                            // only safe from the game's own thread, so hop back for just this part.
+                            // Per Dalamud's docs this needs to be the last thing in the delegate: any
+                            // code after an `await` inside RunOnFrameworkThread() would run back on the
+                            // thread pool, not the framework thread.
+                            await Svc.Framework.RunOnFrameworkThread(() =>
                             {
-                                Task.Delay(Math.Max(0, Config.Delay));
-                                InfoProxyPartyInvite.Instance()->InviteToPartyInInstanceByContentId(contentId);
+                                unsafe
+                                {
+                                    if (invitable)
+                                    {
+                                        InfoProxyPartyInvite.Instance()->InviteToPartyInInstanceByContentId(contentId);
+                                    }
+                                    else
+                                    {
+                                        fixed (byte* namePtr = ToTerminatedBytes(playerName))
+                                            InfoProxyPartyInvite.Instance()->InviteToParty(contentId, namePtr, (ushort)worldRowId);
+                                    }
+                                }
                             });
-                        }
-                        else
-                        {
-                            Task.Run(() =>
-                            {
-                                Task.Delay(Math.Max(0, Config.Delay));
-                                fixed (byte* namePtr = ToTerminatedBytes(playerPayload.PlayerName))
-                                    InfoProxyPartyInvite.Instance()->InviteToParty(contentId, namePtr, (ushort)playerPayload.World.RowId);
-                            });
-                        }
+                        });
                     }
                 }
             }

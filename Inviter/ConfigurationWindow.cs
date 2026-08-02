@@ -3,6 +3,7 @@ using Dalamud.Game.Text;
 using Dalamud.Interface.Windowing;
 using System;
 using System.Linq;
+using System.Numerics;
 
 namespace Inviter
 {
@@ -87,6 +88,12 @@ namespace Inviter
                 Inviter.Plugin.Config.Save();
             if (Inviter.Plugin.Config.ShowTooltips && ImGui.IsItemHovered())
                 ImGui.SetTooltip(Inviter.Plugin.localizer.Localize("Use regex to match the pattern to chat messages."));
+
+            if (string.IsNullOrWhiteSpace(Inviter.Plugin.Config.TextPattern))
+            {
+                ImGui.TextColored(new Vector4(1f, 0.55f, 0.2f, 1f),
+                    Inviter.Plugin.localizer.Localize("Pattern is empty — Inviter will not match any messages until you enter one."));
+            }
 
             ImGui.TextUnformatted(Inviter.Plugin.localizer.Localize("Delay(ms):"));
             if (Inviter.Plugin.Config.ShowTooltips && ImGui.IsItemHovered())
