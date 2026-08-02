@@ -1,0 +1,21 @@
+[
+  {
+    "Author": "Bluefissure",
+    "Name": "Inviter",
+    "InternalName": "Inviter",
+    "AssemblyVersion": "1.2.0.0",
+    "Description": "Automatically invite people to your party (doesn't work for CWLS). /xinvite to open.",
+    "ApplicableVersion": "any",
+    "RepoUrl": "https://github.com/MakorVihar/Inviter",
+    "DalamudApiLevel": 15,
+    "Punchline": "Invite please",
+    "IsHide": false,
+    "IsTestingExclusive": false,
+    "IconUrl": "https://raw.githubusercontent.com/MakorVihar/Inviter/main/images/icon.png",
+    "AcceptsFeedback": true,
+    "DownloadLinkInstall": "https://github.com/MakorVihar/Inviter/releases/latest/download/latest.zip",
+    "DownloadLinkTesting": "https://github.com/MakorVihar/Inviter/releases/latest/download/latest.zip",
+    "DownloadLinkUpdate": "https://github.com/MakorVihar/Inviter/releases/latest/download/latest.zip",
+    "LastUpdate": "0"
+  }
+]

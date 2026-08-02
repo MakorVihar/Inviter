@@ -1,0 +1,10 @@
+﻿{
+    "Author": "Bluefissure",
+    "Name": "Inviter",
+    "Punchline": "Invite please",
+    "Description": "Automatically invite people to your party (doesn't work for CWLS). /xinvite to open.",
+    "InternalName": "Inviter",
+    "RepoUrl": "https://github.com/Bluefissure/Inviter",
+    "IconUrl": "https://raw.githubusercontent.com/Bluefissure/Inviter/main/images/icon.png",
+    "ApplicableVersion": "any"
+}

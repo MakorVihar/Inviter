@@ -1,0 +1,76 @@
+name: Build and Publish
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "repo.json"
+      - "README.md"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      # Matches goatcorp/SamplePlugin's CI: Dalamud isn't on NuGet, so
+      # Dalamud.NET.Sdk needs a local copy of the game-facing assemblies to
+      # build against. This is the Release-channel build, extracted to the
+      # same default path Dalamud.NET.Sdk looks for DALAMUD_HOME at, which is
+      # also where XIVLauncher installs it on a real machine.
+      - name: Download Dalamud
+        run: |
+          Invoke-WebRequest -Uri https://goatcorp.github.io/dalamud-distrib/latest.zip -OutFile latest.zip
+          Expand-Archive -Force latest.zip "$env:AppData\XIVLauncher\addon\Hooks\dev"
+
+      - name: Build
+        run: dotnet build Inviter\Inviter.csproj --configuration Release
+
+      - name: Locate build output
+        id: locate
+        shell: pwsh
+        run: |
+          $zip = Get-ChildItem -Path Inviter\bin -Recurse -Filter "latest.zip" | Select-Object -First 1
+          if (-not $zip) { throw "Could not find latest.zip in build output" }
+          $manifestDir = $zip.Directory.FullName
+          $manifest = Get-Content (Join-Path $manifestDir "Inviter.json") | ConvertFrom-Json
+          "zip_path=$($zip.FullName)" >> $env:GITHUB_OUTPUT
+          "version=$($manifest.AssemblyVersion)" >> $env:GITHUB_OUTPUT
+          "api_level=$($manifest.DalamudApiLevel)" >> $env:GITHUB_OUTPUT
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.locate.outputs.version }}
+          name: v${{ steps.locate.outputs.version }}
+          make_latest: true
+          files: ${{ steps.locate.outputs.zip_path }}
+
+      - name: Update repo.json
+        shell: pwsh
+        run: |
+          $json = Get-Content repo.json -Raw | ConvertFrom-Json
+          $entry = $json[0]
+          $entry.AssemblyVersion = "${{ steps.locate.outputs.version }}"
+          $entry.DalamudApiLevel = [int]"${{ steps.locate.outputs.api_level }}"
+          $entry.LastUpdate = [string][DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+          $json | ConvertTo-Json -Depth 5 | Set-Content repo.json
+
+      - name: Commit repo.json
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add repo.json
+          git diff --cached --quiet || git commit -m "chore: update repo.json for v${{ steps.locate.outputs.version }}"
+          git push
