@@ -106,6 +106,42 @@ namespace Inviter
 
         }
 
+        // Channels where the sender is already in a group with you, so inviting them is
+        // meaningless (they're already partied/allianced/teamed) or outright not possible.
+        private static readonly XivChatType[] AlreadyGroupedTypes =
+        [
+            XivChatType.Party,
+            XivChatType.Alliance,
+            XivChatType.CrossParty,
+            XivChatType.PvPTeam,
+        ];
+
+        // Channels that carry a XivChatTypeInfoAttribute but whose messages don't come from
+        // another player you could invite: system broadcasts, or Echo, which only you can see
+        // (so matching it would just mean inviting yourself).
+        private static readonly XivChatType[] NotAPlayerMessageType =
+        [
+            XivChatType.Urgent,
+            XivChatType.Notice,
+            XivChatType.Echo,
+            XivChatType.CustomEmote,
+            XivChatType.StandardEmote,
+        ];
+
+        // Derived from Dalamud's own XivChatType metadata instead of a hand-picked list, so it
+        // stays correct as Dalamud adds/renumbers chat types: only types with real chat-log info
+        // (GetDetails() != null, i.e. what shows up in the game's own channel config) are
+        // "visible" player channels, GM broadcast variants are dropped via IsUsedByGm(), and the
+        // remaining channels you could never actually invite someone from are excluded above.
+        private static readonly XivChatType[] PublicChatTypes =
+        [
+            .. Enum.GetValues<XivChatType>()
+                .Where(c => c.GetDetails() is not null)
+                .Where(c => !c.IsUsedByGm())
+                .Except(AlreadyGroupedTypes)
+                .Except(NotAPlayerMessageType)
+        ];
+
         private static void DrawFilters()
         {
             if (ImGui.Button(Inviter.Plugin.localizer.Localize("All") + "##filtersAll"))
@@ -119,7 +155,7 @@ namespace Inviter
             ImGui.SameLine();
             if (ImGui.Button(Inviter.Plugin.localizer.Localize("Clear") + "##filtersClear"))
             {
-                Inviter.Plugin.Config.FilteredChannels = [.. Enum.GetValues<XivChatType>().Where(c => !Inviter.Plugin.Config.HiddenChatType.Contains(c))];
+                Inviter.Plugin.Config.FilteredChannels = [.. PublicChatTypes];
                 Inviter.Plugin.Config.Save();
             }
             if (Inviter.Plugin.Config.ShowTooltips && ImGui.IsItemHovered())
@@ -128,7 +164,7 @@ namespace Inviter
             ImGui.Separator();
 
             ImGui.Columns(4, "FiltersTable", true);
-            foreach (XivChatType chatType in Enum.GetValues<XivChatType>())
+            foreach (XivChatType chatType in PublicChatTypes)
             {
                 if (Inviter.Plugin.Config.HiddenChatType.Contains(chatType))
                     continue;
