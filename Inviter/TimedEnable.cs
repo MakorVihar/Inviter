@@ -44,15 +44,14 @@ namespace Inviter
 
                 if (MaxInvitations > 0 && InvitationAttempts >= MaxInvitations)
                 {
-                    Svc.Toasts.ShowQuest(Inviter.Plugin.localizer.Localize("Recruitment finished: Invitation limit reached"));
+                    Inviter.Plugin.ShowStatusToast(Inviter.Plugin.localizer.Localize("Recruitment finished: Invitation limit reached"));
                     FinishTimer();
                     return;
                 }
 
                 if (now >= runUntil)
                 {
-                    Svc.Toasts.ShowQuest(Inviter.Plugin.localizer.Localize("Automatic recruitment finished"),
-                        new QuestToastOptions() { DisplayCheckmark = true, PlaySound = true });
+                    Inviter.Plugin.ShowStatusToast(Inviter.Plugin.localizer.Localize("Automatic recruitment finished"));
                     FinishTimer();
                     return;
                 }
@@ -60,7 +59,7 @@ namespace Inviter
                 if (now >= nextNotification)
                 {
                     double minutesLeft = Math.Ceiling((runUntil - now) / 60d / 1000d);
-                    Svc.Toasts.ShowQuest(string.Format(Inviter.Plugin.localizer.Localize("Automatic recruitment enabled, {0} minutes left"), minutesLeft));
+                    Inviter.Plugin.ShowStatusToast(string.Format(Inviter.Plugin.localizer.Localize("Automatic recruitment enabled, {0} minutes left"), minutesLeft));
 
                     long remaining = runUntil - now;
                     nextNotification = now + Math.Max(60 * 1000, remaining / 2);
@@ -112,12 +111,7 @@ namespace Inviter
                     if (isRunning)
                     {
                         FinishTimer();
-                        Svc.Toasts.ShowQuest(Inviter.Plugin.localizer.Localize("Automatic recruitment canceled"),
-                            new QuestToastOptions()
-                            {
-                                DisplayCheckmark = true,
-                                PlaySound = true
-                            });
+                        Inviter.Plugin.ShowStatusToast(Inviter.Plugin.localizer.Localize("Automatic recruitment canceled"));
                     }
                     else
                     {
@@ -130,13 +124,11 @@ namespace Inviter
                 InvitationAttempts = 0;
                 runUntil = Environment.TickCount64 + timeInMinutes * 60 * 1000;
 
-                Svc.Toasts.ShowQuest(string.Format(Inviter.Plugin.localizer.Localize("Commenced automatic recruitment for {0} minutes"), timeInMinutes),
-                    new QuestToastOptions() { DisplayCheckmark = true, PlaySound = true });
+                Inviter.Plugin.ShowStatusToast(string.Format(Inviter.Plugin.localizer.Localize("Commenced automatic recruitment for {0} minutes"), timeInMinutes));
 
                 if (limit > 0)
                 {
-                    Svc.Toasts.ShowQuest(string.Format(Inviter.Plugin.localizer.Localize("Recruitment will finish after {0} invitation attempts"), limit),
-                        new QuestToastOptions() { DisplayCheckmark = false, PlaySound = false });
+                    Inviter.Plugin.ShowStatusToast(string.Format(Inviter.Plugin.localizer.Localize("Recruitment will finish after {0} invitation attempts"), limit), checkmark: false, sound: false);
                 }
 
                 if (isRunning)

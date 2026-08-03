@@ -68,6 +68,7 @@ namespace Inviter
 
             DtrEntry = Svc.DtrBar.Get("Inviter");
             DtrEntry.OnClick = OnDtrClick;
+            Svc.ClientState.TerritoryChanged += OnTerritoryChanged;
             UpdateDtrBar();
         }
 
@@ -76,12 +77,46 @@ namespace Inviter
             timedRecruitment.FinishTimer();
             MsgHook.Dispose();
             DtrEntry?.Remove();
+            Svc.ClientState.TerritoryChanged -= OnTerritoryChanged;
             Svc.PluginInterface.UiBuilder.Draw -= WindowSystem.Draw;
             Svc.PluginInterface.UiBuilder.Draw -= DrawDtrMenu;
             Svc.PluginInterface.UiBuilder.OpenMainUi -= ConfigurationWindow.Toggle;
             Svc.PluginInterface.UiBuilder.OpenConfigUi -= ConfigurationWindow.Toggle;
             WindowSystem.RemoveAllWindows();
             Svc.Commands.RemoveHandler("/xinvite");
+        }
+
+        private void OnTerritoryChanged(uint territoryId) => UpdateDtrBar();
+
+        /// <summary>
+        /// Resolves whether Inviter is effectively enabled for a given zone: an explicit
+        /// Force On/Off rule overrides the global switch outright; Inherit (or no rule at
+        /// all) just follows it. Shared by MsgHookDetour (per-message) and UpdateDtrBar
+        /// (per-zone-change/state-change) so the two can't disagree with each other.
+        /// </summary>
+        private static bool ResolveEffectiveEnable(bool globalEnable, TerritoryRule? rule)
+        {
+            if (rule?.EnableMode == TerritoryEnableMode.ForceOn)
+                return true;
+            if (rule?.EnableMode == TerritoryEnableMode.ForceOff)
+                return false;
+            return globalEnable;
+        }
+
+        /// <summary>
+        /// Fires a status notification in whichever toast style(s) are enabled (Quest/
+        /// Normal/Error can be on simultaneously, mirroring LazyLoot's toast checkboxes) -
+        /// for actual on/off/timed-session status changes, not validation errors, which
+        /// stay as a plain Svc.Toasts.ShowError regardless of this setting.
+        /// </summary>
+        public void ShowStatusToast(string message, bool checkmark = true, bool sound = true)
+        {
+            if (Config.EnableQuestToast)
+                Svc.Toasts.ShowQuest(message, new QuestToastOptions { DisplayCheckmark = checkmark, PlaySound = sound });
+            if (Config.EnableNormalToast)
+                Svc.Toasts.ShowNormal(message);
+            if (Config.EnableErrorToast)
+                Svc.Toasts.ShowError(message);
         }
 
         /// <summary>
@@ -153,9 +188,11 @@ namespace Inviter
         }
 
         /// <summary>
-        /// Refreshes the DTR bar's visibility and status text. Called explicitly at
-        /// every point Config.Enable/ShowDtrEntry actually change, rather than on a
-        /// per-frame poll, since the plugin has no other reason to hook Framework.Update.
+        /// Refreshes the DTR bar's visibility and status text. Called explicitly at every
+        /// point that could change the effective state - Config.Enable/ShowDtrEntry
+        /// changes, timed-session start/tick/finish, and zone changes (via
+        /// OnTerritoryChanged) - rather than on a per-frame poll, since the plugin has no
+        /// other reason to hook Framework.Update.
         /// </summary>
         public void UpdateDtrBar()
         {
@@ -164,11 +201,17 @@ namespace Inviter
 
             DtrEntry.Shown = Config.ShowDtrEntry;
 
+            var rule = Config.TerritoryRules.Find(r => r.TerritoryId == Svc.ClientState.TerritoryType);
+            var effectiveEnable = ResolveEffectiveEnable(Config.Enable, rule);
+            var overriddenByZoneRule = rule != null && rule.EnableMode != TerritoryEnableMode.Inherit && effectiveEnable != Config.Enable;
+
             string status;
-            if (!Config.Enable)
+            if (!effectiveEnable)
                 status = localizer.Localize("Off");
             else if (timedRecruitment.isRunning)
                 status = string.Format(localizer.Localize("Timed ({0}m)"), timedRecruitment.MinutesRemaining);
+            else if (overriddenByZoneRule)
+                status = localizer.Localize("On (zone rule)");
             else
                 status = localizer.Localize("On");
 
@@ -180,7 +223,25 @@ namespace Inviter
         {
             MsgHook.Original(thisPtr, contentId, accountId, messageIndex, worldId, chatType);
 
-            if (!Config.Enable)
+            var territoryId = Svc.ClientState.TerritoryType;
+            var rule = Config.TerritoryRules.Find(r => r.TerritoryId == territoryId);
+
+            // A rule's TextPattern/RegexMatch override only where actually set. Its on/off
+            // mode only takes effect when explicitly ForceOn/ForceOff - the default Inherit
+            // mode leaves the global Enable switch untouched, so adding a rule just for a
+            // pattern override can't silently keep Inviter alive somewhere Enable is off.
+            bool effectiveEnable = ResolveEffectiveEnable(Config.Enable, rule);
+            string effectiveTextPattern = Config.TextPattern;
+            bool effectiveRegexMatch = Config.RegexMatch;
+            if (rule != null)
+            {
+                if (!string.IsNullOrEmpty(rule.TextPattern))
+                    effectiveTextPattern = rule.TextPattern;
+                if (rule.RegexMatch.HasValue)
+                    effectiveRegexMatch = rule.RegexMatch.Value;
+            }
+
+            if (!effectiveEnable)
                 return;
             if (Config.FilteredChannels.Contains((XivChatType)chatType))
                 return;
@@ -188,7 +249,7 @@ namespace Inviter
                 return;
             if (Svc.Objects.LocalPlayer == null || Svc.Condition[ConditionFlag.BetweenAreas] || Svc.Condition[ConditionFlag.BetweenAreas51])
                 return;
-            if (string.IsNullOrWhiteSpace(Config.TextPattern))
+            if (string.IsNullOrWhiteSpace(effectiveTextPattern))
                 return;
 
             if (!RaptureLogModule.Instance()->GetLogMessageDetail(messageIndex, out var sender, out var rawMessage, out _, out _, out _, out _))
@@ -199,9 +260,9 @@ namespace Inviter
 
             var message = SeString.Parse(rawMessage.AsSpan()).TextValue;
             var matched = false;
-            if (!Config.RegexMatch)
+            if (!effectiveRegexMatch)
             {
-                matched = message.Contains(Config.TextPattern, StringComparison.OrdinalIgnoreCase);
+                matched = message.Contains(effectiveTextPattern, StringComparison.OrdinalIgnoreCase);
             }
             else
             {
@@ -210,7 +271,7 @@ namespace Inviter
                     // Explicit timeout: without one, a message crafted to trigger catastrophic
                     // backtracking against the user's own pattern can hang the match indefinitely,
                     // and that message can come from any other player on a watched channel.
-                    matched = Regex.IsMatch(message, Config.TextPattern, RegexOptions.IgnoreCase, TimeSpan.FromMilliseconds(200));
+                    matched = Regex.IsMatch(message, effectiveTextPattern, RegexOptions.IgnoreCase, TimeSpan.FromMilliseconds(200));
                 }
                 catch (RegexMatchTimeoutException)
                 {
@@ -326,24 +387,14 @@ namespace Inviter
             else if (args == "on")
             {
                 Config.Enable = true;
-                Svc.Toasts.ShowQuest(string.Format(localizer.Localize("Auto invite is turned on for \"{0}\""), Config.TextPattern),
-                    new QuestToastOptions
-                    {
-                        DisplayCheckmark = true,
-                        PlaySound = true
-                    });
+                ShowStatusToast(string.Format(localizer.Localize("Auto invite is turned on for \"{0}\""), Config.TextPattern));
                 Config.Save();
                 UpdateDtrBar();
             }
             else if (args == "off")
             {
                 Config.Enable = false;
-                Svc.Toasts.ShowQuest(localizer.Localize("Auto invite is turned off"),
-                    new QuestToastOptions
-                    {
-                        DisplayCheckmark = true,
-                        PlaySound = true
-                    });
+                ShowStatusToast(localizer.Localize("Auto invite is turned off"));
                 Config.Save();
                 UpdateDtrBar();
             }
@@ -361,21 +412,11 @@ namespace Inviter
                 Config.Enable = !Config.Enable;
                 if (Config.Enable)
                 {
-                    Svc.Toasts.ShowQuest(string.Format(localizer.Localize("Auto invite is turned on for \"{0}\""), Config.TextPattern),
-                        new QuestToastOptions
-                        {
-                            DisplayCheckmark = true,
-                            PlaySound = true
-                        });
+                    ShowStatusToast(string.Format(localizer.Localize("Auto invite is turned on for \"{0}\""), Config.TextPattern));
                 }
                 else
                 {
-                    Svc.Toasts.ShowQuest(localizer.Localize("Auto invite is turned off"),
-                        new QuestToastOptions
-                        {
-                            DisplayCheckmark = true,
-                            PlaySound = true
-                        });
+                    ShowStatusToast(localizer.Localize("Auto invite is turned off"));
                 }
                 Config.Save();
                 UpdateDtrBar();
