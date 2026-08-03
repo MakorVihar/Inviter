@@ -3,7 +3,7 @@
     "Author": "Bluefissure",
     "Name": "Inviter",
     "InternalName": "Inviter",
-    "AssemblyVersion": "1.5.1.0",
+    "AssemblyVersion": "1.5.2.0",
     "Description": "Automatically invite people to your party (doesn't work for CWLS). /xinvite to open.",
     "ApplicableVersion": "any",
     "RepoUrl": "https://github.com/MakorVihar/Inviter",

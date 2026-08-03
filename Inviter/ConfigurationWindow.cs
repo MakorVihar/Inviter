@@ -322,7 +322,7 @@ namespace Inviter
                 ImGui.TableSetupColumn(Inviter.Plugin.localizer.Localize("Mode"), ImGuiTableColumnFlags.WidthFixed, 110f);
                 ImGui.TableSetupColumn(Inviter.Plugin.localizer.Localize("Zone"), ImGuiTableColumnFlags.WidthStretch, 2f);
                 ImGui.TableSetupColumn(Inviter.Plugin.localizer.Localize("Pattern override"), ImGuiTableColumnFlags.WidthStretch, 2f);
-                ImGui.TableSetupColumn(Inviter.Plugin.localizer.Localize("Regex"), ImGuiTableColumnFlags.WidthFixed, 50f);
+                ImGui.TableSetupColumn(Inviter.Plugin.localizer.Localize("Regex"), ImGuiTableColumnFlags.WidthFixed, 90f);
                 ImGui.TableSetupColumn("", ImGuiTableColumnFlags.WidthFixed, 60f);
                 ImGui.TableHeadersRow();
 
@@ -364,21 +364,23 @@ namespace Inviter
                     }
 
                     ImGui.TableNextColumn();
-                    var hasCustomRegex = rule.RegexMatch.HasValue;
-                    if (ImGui.Checkbox("##ruleHasRegex", ref hasCustomRegex))
+                    string[] regexLabels =
+                    [
+                        Inviter.Plugin.localizer.Localize("Inherit"),
+                        Inviter.Plugin.localizer.Localize("On"),
+                        Inviter.Plugin.localizer.Localize("Off"),
+                    ];
+                    var regexIndex = rule.RegexMatch is null ? 0 : rule.RegexMatch.Value ? 1 : 2;
+                    ImGui.SetNextItemWidth(-1);
+                    if (ImGui.Combo("##ruleRegex", ref regexIndex, regexLabels, regexLabels.Length))
                     {
-                        rule.RegexMatch = hasCustomRegex ? Inviter.Plugin.Config.RegexMatch : null;
-                        Inviter.Plugin.Config.Save();
-                    }
-                    if (hasCustomRegex)
-                    {
-                        ImGui.SameLine();
-                        var regexValue = rule.RegexMatch!.Value;
-                        if (ImGui.Checkbox("##ruleRegexValue", ref regexValue))
+                        rule.RegexMatch = regexIndex switch
                         {
-                            rule.RegexMatch = regexValue;
-                            Inviter.Plugin.Config.Save();
-                        }
+                            1 => true,
+                            2 => false,
+                            _ => null,
+                        };
+                        Inviter.Plugin.Config.Save();
                     }
 
                     ImGui.TableNextColumn();
