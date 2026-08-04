@@ -97,7 +97,7 @@ Add a row with **Add Current Zone** while standing in the relevant zone, or find
 
 With the setup above, walking around shows different DTR text depending on where you are:
 
-- Most zones (no rule, main switch off): **`Inviter: Off`**
+- Most zones (main switch on but no rule): **`Inviter: On`**, but not matching anything since the generic rule is empty
 - The hunt train zone (`Force On`): **`Inviter: On (Forced)`** — left-clicking here toggles it to `Off (Forced)` without touching the main switch
 - North Horn (`Inherit` + pattern override): **`Inviter: On (Inherited)`**, same as the main switch since Inherit still follows this — left-clicking here toggles it to **`Inviter: Off (Inherited)`**, turning off the main switch.
 - If you right-click anywhere and start a timed session, that zone shows **`Inviter: Timed (Xm)`** instead, counting down
