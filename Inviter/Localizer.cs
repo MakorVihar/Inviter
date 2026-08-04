@@ -95,6 +95,75 @@ namespace Inviter
             zh.Add("Time can not be negative", "时间不能为负数");
             zh.Add("Please enter amount of time in minutes", "请输入分钟数作为时长");
             zh.Add("Recruitment will finish after {0} invitation attempts", "自动邀请将在完成{0}次邀请后关闭");
+
+            // General Settings additions
+            zh.Add("Inviter Enabled", "Inviter 已启用");
+            zh.Add("Inviter Disabled", "Inviter 已禁用");
+            zh.Add("Delay the invitation after triggered, randomized between these two values each time.", "触发后延迟邀请，每次在这两个数值之间随机取值。");
+            zh.Add("to", "至");
+            zh.Add("Rate limit (ms):", "速率限制（毫秒）：");
+            zh.Add("How much time must pass between invitations.", "两次邀请之间必须间隔的时间。");
+            zh.Add("Show an Inviter status entry in the server info bar. Left-click toggles it, right-click opens a quick menu.", "在服务器信息栏中显示 Inviter 状态。左键点击切换开关，右键点击打开快捷菜单。");
+            zh.Add("Server Info Bar Enabled", "服务器信息栏已启用");
+            zh.Add("Server Info Bar Disabled", "服务器信息栏已禁用");
+            zh.Add("Display as Toasts:", "显示为提示消息：");
+            zh.Add("Show status changes as a pop-up toast, using the styles below. More than one can be enabled at once.", "以弹出提示的形式显示状态变化，使用下方的样式。可以同时启用多种样式。");
+            zh.Add("Quest", "任务");
+            zh.Add("Normal", "普通");
+            zh.Add("Error", "错误");
+
+            // Tab bar / Channels tab
+            zh.Add("Features", "功能");
+            zh.Add("Channels", "频道");
+            zh.Add("User Restriction", "使用限制");
+            zh.Add("All", "全选");
+            zh.Add("Check every channel.", "勾选所有频道。");
+            zh.Add("Uncheck every channel.", "取消勾选所有频道。");
+
+            // User Restriction: Everywhere / zone rules
+            zh.Add("Everywhere...", "所有地方……");
+            zh.Add("...but for these Maps", "……但这些地图除外");
+            zh.Add("The default pattern used everywhere, unless a zone under \"...but for these Maps\" overrides it.", "在所有地方使用的默认模式，除非在“……但这些地图除外”中为该区域设置了覆盖。");
+            zh.Add("Pattern is empty — Inviter will not match any messages until you enter one.", "模式为空 — 在您输入内容之前，Inviter 不会匹配任何消息。");
+            zh.Add(
+                "Zones listed here override \"Everywhere...\". Inherit only overrides the Pattern (and whether it's " +
+                "regex) if you check its box below; Force On/Off override the main Enable switch for that zone specifically.",
+                "此处列出的区域将覆盖“所有地方……”的设置。“继承”仅在您勾选下方的复选框时才会覆盖模式（以及是否为正则表达式）；“强制开启/关闭”则会专门针对该区域覆盖主开关。");
+            zh.Add("(No zone rules added.)", "（尚未添加区域规则。）");
+            zh.Add("Mode", "模式");
+            zh.Add("Zone", "区域");
+            zh.Add("Pattern override", "模式覆盖");
+            zh.Add("Only applies when this zone has a pattern override.", "仅在此区域设置了模式覆盖时生效。");
+            zh.Add("Remove", "移除");
+            zh.Add("Inherit", "继承");
+            zh.Add("Force On", "强制开启");
+            zh.Add("Force Off", "强制关闭");
+            zh.Add("Add Current Zone", "添加当前区域");
+            zh.Add("Search zone name...", "搜索区域名称……");
+
+            // DTR bar status text and quick menu
+            zh.Add("On", "开启");
+            zh.Add("Off", "关闭");
+            zh.Add("Inherited - {0}", "继承 - {0}");
+            zh.Add("Forced - {0}", "强制 - {0}");
+            zh.Add("Timed ({0}m)", "限时（{0}分钟）");
+            zh.Add("Left-click: toggle. Right-click: menu.", "左键点击：切换。右键点击：菜单。");
+            zh.Add("Turn On", "开启");
+            zh.Add("Turn Off", "关闭");
+            zh.Add("Open Settings...", "打开设置……");
+            zh.Add("Cancel timed recruitment", "取消限时自动邀请");
+            zh.Add("Zone forced {0}", "区域已强制{0}");
+            zh.Add("Custom:", "自定义：");
+            zh.Add("min", "分钟");
+            zh.Add("attempts", "次尝试");
+            zh.Add("Start", "开始");
+            zh.Add("Enable for {0} minutes", "启用{0}分钟");
+
+            // Timed recruitment toasts (matching the current exact wording used in code)
+            zh.Add("Automatic recruitment canceled", "限时自动邀请已取消");
+            zh.Add("Recruitment is not running, cannot cancel", "限时自动邀请未运行，无法取消");
+            zh.Add("Invalid time format. Please enter minutes as a number", "时间格式无效，请输入数字形式的分钟数");
+            zh.Add("Recruitment finished: Invitation limit reached", "招募已结束：已达到邀请数量上限");
         }
         private void LoadFr()
         {
@@ -160,6 +229,81 @@ namespace Inviter
             fr.Add("Tele", "Télé");
             fr.Add("Del", "Del");
             fr.Add("Clear", "Nettoyer");
+
+            // Timed recruitment toasts (previously missing from fr entirely)
+            fr.Add("Auto invite is turned off", "L'invitation automatique est désactivée");
+            fr.Add("Auto invite is turned on for \"{0}\"", "L'invitation automatique est activée pour « {0} »");
+            fr.Add("Automatic recruitment enabled, {0} minutes left", "Recrutement automatique activé, {0} minutes restantes");
+            fr.Add("Automatic recruitment finished", "Recrutement automatique terminé");
+            fr.Add("Commenced automatic recruitment for {0} minutes", "Recrutement automatique commencé pour {0} minutes");
+            fr.Add("Recruitment will finish after {0} invitation attempts", "Le recrutement se terminera après {0} tentatives d'invitation");
+            fr.Add("Automatic recruitment canceled", "Recrutement automatique annulé");
+            fr.Add("Recruitment is not running, cannot cancel", "Le recrutement n'est pas en cours, impossible d'annuler");
+            fr.Add("Invalid time format. Please enter minutes as a number", "Format de temps invalide. Veuillez entrer les minutes sous forme de nombre");
+            fr.Add("Recruitment finished: Invitation limit reached", "Recrutement terminé : limite d'invitations atteinte");
+
+            // General Settings additions
+            fr.Add("Inviter Enabled", "Inviter activé");
+            fr.Add("Inviter Disabled", "Inviter désactivé");
+            fr.Add("Delay the invitation after triggered, randomized between these two values each time.", "Délai avant l'invitation après déclenchement, tiré aléatoirement entre ces deux valeurs à chaque fois.");
+            fr.Add("to", "à");
+            fr.Add("Rate limit (ms):", "Limite de fréquence (ms) :");
+            fr.Add("How much time must pass between invitations.", "Le temps devant s'écouler entre deux invitations.");
+            fr.Add("Show an Inviter status entry in the server info bar. Left-click toggles it, right-click opens a quick menu.", "Afficher l'état d'Inviter dans la barre d'informations. Clic gauche pour basculer, clic droit pour ouvrir un menu rapide.");
+            fr.Add("Server Info Bar Enabled", "Barre d'informations activée");
+            fr.Add("Server Info Bar Disabled", "Barre d'informations désactivée");
+            fr.Add("Display as Toasts:", "Afficher en tant que notifications :");
+            fr.Add("Show status changes as a pop-up toast, using the styles below. More than one can be enabled at once.", "Afficher les changements d'état sous forme de notification, avec les styles ci-dessous. Plusieurs styles peuvent être activés en même temps.");
+            fr.Add("Quest", "Quête");
+            fr.Add("Normal", "Normal");
+            fr.Add("Error", "Erreur");
+
+            // Tab bar / Channels tab
+            fr.Add("Features", "Fonctionnalités");
+            fr.Add("Channels", "Canaux");
+            fr.Add("User Restriction", "Restriction d'utilisation");
+            fr.Add("All", "Tout");
+            fr.Add("Check every channel.", "Cocher tous les canaux.");
+            fr.Add("Uncheck every channel.", "Décocher tous les canaux.");
+
+            // User Restriction: Everywhere / zone rules
+            fr.Add("Everywhere...", "Partout...");
+            fr.Add("...but for these Maps", "...mais pour ces zones");
+            fr.Add("The default pattern used everywhere, unless a zone under \"...but for these Maps\" overrides it.", "Le pattern par défaut utilisé partout, sauf si une zone sous « ...mais pour ces zones » le remplace.");
+            fr.Add("Pattern is empty — Inviter will not match any messages until you enter one.", "Le pattern est vide — Inviter ne correspondra à aucun message tant que vous n'en aurez pas saisi un.");
+            fr.Add(
+                "Zones listed here override \"Everywhere...\". Inherit only overrides the Pattern (and whether it's " +
+                "regex) if you check its box below; Force On/Off override the main Enable switch for that zone specifically.",
+                "Les zones listées ici remplacent « Partout... ». Hériter ne remplace le pattern (et le fait qu'il soit une regex) que si vous cochez sa case ci-dessous ; Forcer activé/désactivé remplace l'interrupteur principal spécifiquement pour cette zone.");
+            fr.Add("(No zone rules added.)", "(Aucune règle de zone ajoutée.)");
+            fr.Add("Mode", "Mode");
+            fr.Add("Zone", "Zone");
+            fr.Add("Pattern override", "Substitution de pattern");
+            fr.Add("Only applies when this zone has a pattern override.", "S'applique uniquement si cette zone possède une substitution de pattern.");
+            fr.Add("Remove", "Supprimer");
+            fr.Add("Inherit", "Hériter");
+            fr.Add("Force On", "Forcer activé");
+            fr.Add("Force Off", "Forcer désactivé");
+            fr.Add("Add Current Zone", "Ajouter la zone actuelle");
+            fr.Add("Search zone name...", "Rechercher une zone...");
+
+            // DTR bar status text and quick menu
+            fr.Add("On", "Activé");
+            fr.Add("Off", "Désactivé");
+            fr.Add("Inherited - {0}", "Hérité - {0}");
+            fr.Add("Forced - {0}", "Forcé - {0}");
+            fr.Add("Timed ({0}m)", "Minuté ({0}m)");
+            fr.Add("Left-click: toggle. Right-click: menu.", "Clic gauche : basculer. Clic droit : menu.");
+            fr.Add("Turn On", "Activer");
+            fr.Add("Turn Off", "Désactiver");
+            fr.Add("Open Settings...", "Ouvrir les paramètres...");
+            fr.Add("Cancel timed recruitment", "Annuler le recrutement minuté");
+            fr.Add("Zone forced {0}", "Zone forcée {0}");
+            fr.Add("Custom:", "Personnalisé :");
+            fr.Add("min", "min");
+            fr.Add("attempts", "tentatives");
+            fr.Add("Start", "Démarrer");
+            fr.Add("Enable for {0} minutes", "Activer pendant {0} minutes");
         }
     }
 }

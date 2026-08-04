@@ -77,10 +77,26 @@ namespace Inviter
 
             ImGui.TextUnformatted(Inviter.Plugin.localizer.Localize("Delay(ms):"));
             if (Inviter.Plugin.Config.ShowTooltips && ImGui.IsItemHovered())
-                ImGui.SetTooltip(Inviter.Plugin.localizer.Localize("Delay the invitation after triggered."));
-            ImGui.SetNextItemWidth(150);
-            if (ImGui.InputInt("##Delay", ref Inviter.Plugin.Config.Delay, 10, 100))
+                ImGui.SetTooltip(Inviter.Plugin.localizer.Localize("Delay the invitation after triggered, randomized between these two values each time."));
+            ImGui.SetNextItemWidth(100);
+            if (ImGui.InputInt("##DelayMin", ref Inviter.Plugin.Config.DelayMin, 10, 100))
+            {
+                Inviter.Plugin.Config.DelayMin = Math.Max(0, Inviter.Plugin.Config.DelayMin);
+                if (Inviter.Plugin.Config.DelayMax < Inviter.Plugin.Config.DelayMin)
+                    Inviter.Plugin.Config.DelayMax = Inviter.Plugin.Config.DelayMin;
                 Inviter.Plugin.Config.Save();
+            }
+            ImGui.SameLine();
+            ImGui.TextUnformatted(Inviter.Plugin.localizer.Localize("to"));
+            ImGui.SameLine();
+            ImGui.SetNextItemWidth(100);
+            if (ImGui.InputInt("##DelayMax", ref Inviter.Plugin.Config.DelayMax, 10, 100))
+            {
+                Inviter.Plugin.Config.DelayMax = Math.Max(0, Inviter.Plugin.Config.DelayMax);
+                if (Inviter.Plugin.Config.DelayMin > Inviter.Plugin.Config.DelayMax)
+                    Inviter.Plugin.Config.DelayMin = Inviter.Plugin.Config.DelayMax;
+                Inviter.Plugin.Config.Save();
+            }
 
             ImGui.TextUnformatted(Inviter.Plugin.localizer.Localize("Rate limit (ms):"));
             if (Inviter.Plugin.Config.ShowTooltips && ImGui.IsItemHovered())
@@ -301,8 +317,8 @@ namespace Inviter
         private void DrawMaps()
         {
             ImGui.TextWrapped(Inviter.Plugin.localizer.Localize(
-                "Zones listed here override \"Everywhere...\". Inherit only overrides Pattern/Regex if you check " +
-                "their box below; Force On/Off override the main Enable switch for that zone specifically."));
+                "Zones listed here override \"Everywhere...\". Inherit only overrides the Pattern (and whether it's " +
+                "regex) if you check its box below; Force On/Off override the main Enable switch for that zone specifically."));
             ImGui.Separator();
 
             var rules = Inviter.Plugin.Config.TerritoryRules;
@@ -322,7 +338,7 @@ namespace Inviter
                 ImGui.TableSetupColumn(Inviter.Plugin.localizer.Localize("Mode"), ImGuiTableColumnFlags.WidthFixed, 110f);
                 ImGui.TableSetupColumn(Inviter.Plugin.localizer.Localize("Zone"), ImGuiTableColumnFlags.WidthStretch, 2f);
                 ImGui.TableSetupColumn(Inviter.Plugin.localizer.Localize("Pattern override"), ImGuiTableColumnFlags.WidthStretch, 2f);
-                ImGui.TableSetupColumn(Inviter.Plugin.localizer.Localize("Regex"), ImGuiTableColumnFlags.WidthFixed, 50f);
+                ImGui.TableSetupColumn(Inviter.Plugin.localizer.Localize("Regex"), ImGuiTableColumnFlags.WidthFixed, 55f);
                 ImGui.TableSetupColumn("", ImGuiTableColumnFlags.WidthFixed, 60f);
                 ImGui.TableHeadersRow();
 
@@ -364,21 +380,20 @@ namespace Inviter
                     }
 
                     ImGui.TableNextColumn();
-                    var hasCustomRegex = rule.RegexMatch.HasValue;
-                    if (ImGui.Checkbox("##ruleHasRegex", ref hasCustomRegex))
+                    if (hasCustomPattern)
                     {
-                        rule.RegexMatch = hasCustomRegex ? Inviter.Plugin.Config.RegexMatch : null;
-                        Inviter.Plugin.Config.Save();
-                    }
-                    if (hasCustomRegex)
-                    {
-                        ImGui.SameLine();
-                        var regexValue = rule.RegexMatch!.Value;
-                        if (ImGui.Checkbox("##ruleRegexValue", ref regexValue))
+                        var regexValue = rule.RegexMatch;
+                        if (ImGui.Checkbox("##ruleRegex", ref regexValue))
                         {
                             rule.RegexMatch = regexValue;
                             Inviter.Plugin.Config.Save();
                         }
+                    }
+                    else
+                    {
+                        ImGui.TextDisabled("-");
+                        if (Inviter.Plugin.Config.ShowTooltips && ImGui.IsItemHovered())
+                            ImGui.SetTooltip(Inviter.Plugin.localizer.Localize("Only applies when this zone has a pattern override."));
                     }
 
                     ImGui.TableNextColumn();

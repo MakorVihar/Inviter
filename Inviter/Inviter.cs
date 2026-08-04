@@ -86,7 +86,7 @@ namespace Inviter
             Svc.Commands.RemoveHandler("/xinvite");
         }
 
-        private void OnTerritoryChanged(uint territoryId) => UpdateDtrBar();
+        private void OnTerritoryChanged(uint territoryId) => UpdateDtrBar(territoryId);
 
         /// <summary>
         /// Resolves whether Inviter is effectively enabled for a given zone: an explicit
@@ -120,9 +120,11 @@ namespace Inviter
         }
 
         /// <summary>
-        /// Left-click toggles auto-invite on/off; right-click opens the quick menu.
-        /// Both are just routed through the /xinvite command parser so there is
-        /// exactly one place that implements this logic.
+        /// Left-click toggles auto-invite; right-click opens the quick menu. Which "toggle"
+        /// happens on the left depends on the current zone's rule: Forced zones flip the
+        /// force state directly (staying Forced, just swapping On/Off) since the whole point
+        /// of Forcing is to ignore the global switch; unlisted zones and Inherit both just
+        /// flip the global switch, since that's what they're following anyway.
         /// </summary>
         private void OnDtrClick(DtrInteractionEvent ev)
         {
@@ -130,6 +132,20 @@ namespace Inviter
             {
                 _dtrMenuPos = ev.Position;
                 _openDtrMenu = true;
+                return;
+            }
+
+            var rule = Config.TerritoryRules.Find(r => r.TerritoryId == Svc.ClientState.TerritoryType);
+            if (rule != null && rule.EnableMode != TerritoryEnableMode.Inherit)
+            {
+                rule.EnableMode = rule.EnableMode == TerritoryEnableMode.ForceOn
+                    ? TerritoryEnableMode.ForceOff
+                    : TerritoryEnableMode.ForceOn;
+                Config.Save();
+                ShowStatusToast(string.Format(
+                    localizer.Localize("Zone forced {0}"),
+                    rule.EnableMode == TerritoryEnableMode.ForceOn ? localizer.Localize("On") : localizer.Localize("Off")));
+                UpdateDtrBar();
                 return;
             }
 
@@ -190,30 +206,41 @@ namespace Inviter
         /// <summary>
         /// Refreshes the DTR bar's visibility and status text. Called explicitly at every
         /// point that could change the effective state - Config.Enable/ShowDtrEntry
-        /// changes, timed-session start/tick/finish, and zone changes (via
-        /// OnTerritoryChanged) - rather than on a per-frame poll, since the plugin has no
-        /// other reason to hook Framework.Update.
+        /// changes, timed-session start/tick/finish, zone rule edits, and zone changes -
+        /// rather than on a per-frame poll, since the plugin has no other reason to hook
+        /// Framework.Update.
+        ///
+        /// territoryIdOverride exists because OnTerritoryChanged fires with the new zone's ID
+        /// before Svc.ClientState.TerritoryType necessarily reflects it - reading the stale
+        /// property there could show the previous zone's status for a tick. Every other
+        /// caller just wants "the zone I'm in right now" and can omit it.
         /// </summary>
-        public void UpdateDtrBar()
+        public void UpdateDtrBar(uint? territoryIdOverride = null)
         {
             if (DtrEntry == null)
                 return;
 
             DtrEntry.Shown = Config.ShowDtrEntry;
 
-            var rule = Config.TerritoryRules.Find(r => r.TerritoryId == Svc.ClientState.TerritoryType);
+            var territoryId = territoryIdOverride ?? Svc.ClientState.TerritoryType;
+            var rule = Config.TerritoryRules.Find(r => r.TerritoryId == territoryId);
             var effectiveEnable = ResolveEffectiveEnable(Config.Enable, rule);
-            var overriddenByZoneRule = rule != null && rule.EnableMode != TerritoryEnableMode.Inherit && effectiveEnable != Config.Enable;
 
             string status;
-            if (!effectiveEnable)
-                status = localizer.Localize("Off");
-            else if (timedRecruitment.isRunning)
+            if (timedRecruitment.isRunning && effectiveEnable)
+            {
                 status = string.Format(localizer.Localize("Timed ({0}m)"), timedRecruitment.MinutesRemaining);
-            else if (overriddenByZoneRule)
-                status = localizer.Localize("On (zone rule)");
+            }
+            else if (rule == null || rule.EnableMode == TerritoryEnableMode.Inherit)
+            {
+                var onOff = Config.Enable ? localizer.Localize("On") : localizer.Localize("Off");
+                status = rule == null ? onOff : string.Format(localizer.Localize("Inherited - {0}"), onOff);
+            }
             else
-                status = localizer.Localize("On");
+            {
+                var onOff = rule.EnableMode == TerritoryEnableMode.ForceOn ? localizer.Localize("On") : localizer.Localize("Off");
+                status = string.Format(localizer.Localize("Forced - {0}"), onOff);
+            }
 
             DtrEntry.Text = new SeString(new TextPayload($"Inviter: {status}"));
             DtrEntry.Tooltip = new SeString(new TextPayload(localizer.Localize("Left-click: toggle. Right-click: menu.")));
@@ -233,12 +260,12 @@ namespace Inviter
             bool effectiveEnable = ResolveEffectiveEnable(Config.Enable, rule);
             string effectiveTextPattern = Config.TextPattern;
             bool effectiveRegexMatch = Config.RegexMatch;
-            if (rule != null)
+            if (rule != null && !string.IsNullOrEmpty(rule.TextPattern))
             {
-                if (!string.IsNullOrEmpty(rule.TextPattern))
-                    effectiveTextPattern = rule.TextPattern;
-                if (rule.RegexMatch.HasValue)
-                    effectiveRegexMatch = rule.RegexMatch.Value;
+                // RegexMatch only ever applies alongside a custom pattern - see the comment on
+                // TerritoryRule.RegexMatch for why there's no separate "inherit" state for it.
+                effectiveTextPattern = rule.TextPattern;
+                effectiveRegexMatch = rule.RegexMatch;
             }
 
             if (!effectiveEnable)
@@ -345,15 +372,18 @@ namespace Inviter
         }
 
         /// <summary>
-        /// Waits Config.Delay off the main thread, then hops onto the framework thread
-        /// (the only thread it's safe to touch FFXIVClientStructs game memory from) to
-        /// actually send the invite. Deliberately not `unsafe` at the method level so it's
-        /// allowed to `await` — only the synchronous callback passed to
-        /// RunOnFrameworkThread, which has no `await` in it, is marked unsafe.
+        /// Waits a randomized delay (between Config.DelayMin and Config.DelayMax) off the main
+        /// thread, then hops onto the framework thread (the only thread it's safe to touch
+        /// FFXIVClientStructs game memory from) to actually send the invite. Deliberately not
+        /// `unsafe` at the method level so it's allowed to `await` — only the synchronous
+        /// callback passed to RunOnFrameworkThread, which has no `await` in it, is marked unsafe.
         /// </summary>
         private async Task SendInviteAsync(ulong contentId, bool invitable, string playerName, uint worldRowId)
         {
-            await Task.Delay(Math.Max(0, Config.Delay));
+            var lo = Math.Max(0, Math.Min(Config.DelayMin, Config.DelayMax));
+            var hi = Math.Max(0, Math.Max(Config.DelayMin, Config.DelayMax));
+            var delayMs = lo == hi ? lo : Random.Shared.Next(lo, hi + 1);
+            await Task.Delay(delayMs);
 
             // Per Dalamud's docs this needs to be the last thing in the delegate: any code
             // after an `await` inside RunOnFrameworkThread() would run back on the thread

@@ -19,7 +19,14 @@ namespace Inviter
         public bool EnableQuestToast = true;
         public bool EnableNormalToast = false;
         public bool EnableErrorToast = false;
-        public int Delay = 200;
+        /// <summary>
+        /// Invite delay is randomized between these two (inclusive) each time, rather than
+        /// fixed, mainly so a string of invites doesn't look obviously scripted/bot-timed.
+        /// If DelayMax &lt; DelayMin the actual random draw (see Inviter.SendInviteAsync)
+        /// swaps them defensively, so a hand-edited config can't end up with an invalid range.
+        /// </summary>
+        public int DelayMin = 200;
+        public int DelayMax = 200;
         public int Ratelimit = 500;
 
         public List<XivChatType> FilteredChannels = [];
@@ -65,6 +72,12 @@ namespace Inviter
         public uint TerritoryId;
         public TerritoryEnableMode EnableMode = TerritoryEnableMode.Inherit;
         public string? TextPattern;
-        public bool? RegexMatch;
+
+        /// <summary>
+        /// Only meaningful alongside TextPattern - whether that override pattern is regex.
+        /// Deliberately a plain bool, not bool?: "inherit the global regex setting" doesn't
+        /// make sense for a pattern that isn't the global pattern in the first place.
+        /// </summary>
+        public bool RegexMatch;
     }
 }
