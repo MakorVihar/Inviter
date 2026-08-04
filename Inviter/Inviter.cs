@@ -104,6 +104,19 @@ namespace Inviter
         }
 
         /// <summary>
+        /// Resolves the effective text pattern for a zone: the zone's own override if it has
+        /// one, otherwise the global pattern. Shared by MsgHookDetour (matching) and
+        /// CommandHandler (the "turned on for {0}" toast), so the toast can't claim a
+        /// different pattern than what's actually being matched against in that zone.
+        /// </summary>
+        private static string ResolveEffectiveTextPattern(Configuration config, TerritoryRule? rule) =>
+            rule != null && !string.IsNullOrEmpty(rule.TextPattern) ? rule.TextPattern : config.TextPattern;
+
+        /// <summary>Looks up the territory rule, if any, for whatever zone the player is currently in.</summary>
+        private TerritoryRule? GetCurrentZoneRule() =>
+            Config.TerritoryRules.Find(r => r.TerritoryId == Svc.ClientState.TerritoryType);
+
+        /// <summary>
         /// Fires a status notification in whichever toast style(s) are enabled (Quest/
         /// Normal/Error can be on simultaneously, mirroring LazyLoot's toast checkboxes) -
         /// for actual on/off/timed-session status changes, not validation errors, which
@@ -135,7 +148,7 @@ namespace Inviter
                 return;
             }
 
-            var rule = Config.TerritoryRules.Find(r => r.TerritoryId == Svc.ClientState.TerritoryType);
+            var rule = GetCurrentZoneRule();
             if (rule != null && rule.EnableMode != TerritoryEnableMode.Inherit)
             {
                 rule.EnableMode = rule.EnableMode == TerritoryEnableMode.ForceOn
@@ -250,23 +263,16 @@ namespace Inviter
         {
             MsgHook.Original(thisPtr, contentId, accountId, messageIndex, worldId, chatType);
 
-            var territoryId = Svc.ClientState.TerritoryType;
-            var rule = Config.TerritoryRules.Find(r => r.TerritoryId == territoryId);
+            var rule = GetCurrentZoneRule();
 
             // A rule's TextPattern/RegexMatch override only where actually set. Its on/off
             // mode only takes effect when explicitly ForceOn/ForceOff - the default Inherit
             // mode leaves the global Enable switch untouched, so adding a rule just for a
             // pattern override can't silently keep Inviter alive somewhere Enable is off.
+            bool hasPatternOverride = rule != null && !string.IsNullOrEmpty(rule.TextPattern);
             bool effectiveEnable = ResolveEffectiveEnable(Config.Enable, rule);
-            string effectiveTextPattern = Config.TextPattern;
-            bool effectiveRegexMatch = Config.RegexMatch;
-            if (rule != null && !string.IsNullOrEmpty(rule.TextPattern))
-            {
-                // RegexMatch only ever applies alongside a custom pattern - see the comment on
-                // TerritoryRule.RegexMatch for why there's no separate "inherit" state for it.
-                effectiveTextPattern = rule.TextPattern;
-                effectiveRegexMatch = rule.RegexMatch;
-            }
+            string effectiveTextPattern = ResolveEffectiveTextPattern(Config, rule);
+            bool effectiveRegexMatch = hasPatternOverride ? rule!.RegexMatch : Config.RegexMatch;
 
             if (!effectiveEnable)
                 return;
@@ -417,7 +423,7 @@ namespace Inviter
             else if (args == "on")
             {
                 Config.Enable = true;
-                ShowStatusToast(string.Format(localizer.Localize("Auto invite is turned on for \"{0}\""), Config.TextPattern));
+                ShowStatusToast(string.Format(localizer.Localize("Auto invite is turned on for \"{0}\""), ResolveEffectiveTextPattern(Config, GetCurrentZoneRule())));
                 Config.Save();
                 UpdateDtrBar();
             }
@@ -442,7 +448,7 @@ namespace Inviter
                 Config.Enable = !Config.Enable;
                 if (Config.Enable)
                 {
-                    ShowStatusToast(string.Format(localizer.Localize("Auto invite is turned on for \"{0}\""), Config.TextPattern));
+                    ShowStatusToast(string.Format(localizer.Localize("Auto invite is turned on for \"{0}\""), ResolveEffectiveTextPattern(Config, GetCurrentZoneRule())));
                 }
                 else
                 {

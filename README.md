@@ -20,14 +20,14 @@ Then find "Inviter" under **Plugin Installer → All Plugins** and install it.
 ## Features
 
 - Automatically invites players whose chat message matches a text pattern or regex you configure
-- Per-channel filters, so you can pick exactly which chat channels are checked, with "All" / "Clear" shortcuts
+- Per-channel filters, so you can pick exactly which chat channels are checked
 - Per-zone rules: override the pattern (and whether it's regex) for specific zones, or force auto-invite on/off in specific zones regardless of the main switch
 - A server info bar (DTR) entry showing the effective status for whatever zone you're currently in:
   - `On` / `Off` — following the main switch, no zone rule for this zone
   - `On (Inherited)` / `Off (Inherited)` — this zone has a rule, but it's set to Inherit, so it's still following the main switch
   - `On (Forced)` / `Off (Forced)` — this zone has a Force On/Off rule, overriding the main switch
   - `Timed (Xm)` — a timed session is running and currently in effect
-  - **Left-click** the entry to toggle. In a Forced zone this flips the force state directly (Forced - On ↔ Forced - Off) without touching the main switch; everywhere else it toggles the main switch
+  - **Left-click** the entry to toggle. In a Forced zone this flips the force state directly (`On (Forced)` ↔ `Off (Forced)`) without touching the main switch; everywhere else it toggles the main switch
   - **Right-click** the entry for a quick menu: turn on/off, start a timed session (with duration presets or a custom minutes/attempts input), cancel a running timed session, or open settings
 
 ![General Settings](images/settings_window.jpg)
@@ -74,7 +74,7 @@ A worked example, walking through every part of the config using one scenario: *
 - **Enable** — set this **on** in our example.
 - **Tooltips** — on, just for convenience while configuring.
 - **Server Info Bar** — on, so the DTR entry shows current status (see section 4).
-- **Pattern** — (empty), **Regex** off. This is the global default: anywhere without a zone-specific pattern override falls back to this. An empty pattern will not match anything.
+- **Pattern** — cleared to empty for this walkthrough, **Regex** off. The shipped default is actually `inv`; we're blanking it here on purpose so nothing matches globally, and only the zone overrides below (which each set their own pattern) do anything. An empty pattern never matches anything.
 - **Delay (ms)** — a randomized wait between the two values you set here, before actually sending the invite; e.g. `200` to `600` means each invite waits somewhere between 200ms and 600ms, not always the same amount.
 - **Rate limit (ms)** — how long to wait between invites, so as to not trigger a burst of invites.
 
@@ -88,7 +88,7 @@ Two example zones:
 
 | Mode | Zone | Pattern override | Regex | Why |
 |---|---|---|---|---|
-| `Force On` | (the hunt train zone) | `inv` | — | Auto-invite runs here regardless of whether the main switch above is on or off |
+| `Force On` | (the hunt train zone) | `inv` | off | Auto-invite runs here regardless of whether the main switch above is on or off |
 | `Inherit` | North Horn | `^(?!.*tower).*lfg.*$` | on | Follows the main switch like normal, but uses this zone's own pattern instead of the global `inv` — here, "lfg" is used for two groups in that zone, and this excludes one of them. |
 
 Add a row with **Add Current Zone** while standing in the relevant zone, or find one elsewhere with **Search zone name...**.
@@ -106,10 +106,10 @@ With the setup above, walking around shows different DTR text depending on where
 
 | Pattern | Regex | Matches | Doesn't match |
 |---|---|---|---|
-| `inv` | off | any message containing "inv" — "inv", "invite", but also "invalid", "convince" | messages with no "inv" substring at all |
-| `\binv\b` | on | "inv" as a standalone word | "invalid", "convince", "investment" — false positives from the plain substring version above |
-| `\b(inv\|lfg)\b` | on | "inv" or "lfg" as standalone words | "invalid", "lfgroup" |
-| `^(?!.*tower).*lfg.*$` | on | any message containing "lfg", as long as it doesn't also contain "tower" | "lfg ce", but not "lfg tower" |
+| `inv` | off | any message containing "inv" — "inv", "invite", but also "inventory" and "convince" | messages with no "inv" substring at all |
+| `\binv\b` | on | "inv" as a standalone word | "inventory", "convince" |
+| `\b(inv\|lfg)\b` | on | "inv" or "lfg" as standalone words | "inventory", "lfgroup" |
+| `^(?!.*tower).*lfg.*$` | on | any message containing "lfg", as long as it doesn't also contain "tower" | "lfg tower" — contains both "lfg" and "tower", so the negative lookahead rejects it |
 
 ## Credits
 

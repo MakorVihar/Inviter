@@ -355,6 +355,7 @@ namespace Inviter
                     {
                         rule.EnableMode = (TerritoryEnableMode)modeIndex;
                         Inviter.Plugin.Config.Save();
+                        Inviter.Plugin.UpdateDtrBar();
                     }
 
                     ImGui.TableNextColumn();
@@ -409,6 +410,7 @@ namespace Inviter
                 {
                     rules.Remove(toRemove);
                     Inviter.Plugin.Config.Save();
+                    Inviter.Plugin.UpdateDtrBar();
                 }
             }
 
@@ -421,6 +423,7 @@ namespace Inviter
                 {
                     rules.Add(new TerritoryRule { TerritoryId = currentId });
                     Inviter.Plugin.Config.Save();
+                    Inviter.Plugin.UpdateDtrBar();
                 }
             }
 
@@ -442,6 +445,7 @@ namespace Inviter
                     {
                         rules.Add(new TerritoryRule { TerritoryId = territory.RowId });
                         Inviter.Plugin.Config.Save();
+                        Inviter.Plugin.UpdateDtrBar();
                         _ruleTerritorySearch = "";
                     }
                 }
