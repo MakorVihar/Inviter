@@ -234,12 +234,12 @@ namespace Inviter
             else if (rule == null || rule.EnableMode == TerritoryEnableMode.Inherit)
             {
                 var onOff = Config.Enable ? localizer.Localize("On") : localizer.Localize("Off");
-                status = rule == null ? onOff : string.Format(localizer.Localize("Inherited - {0}"), onOff);
+                status = rule == null ? onOff : string.Format(localizer.Localize("{0} (Inherited)"), onOff);
             }
             else
             {
                 var onOff = rule.EnableMode == TerritoryEnableMode.ForceOn ? localizer.Localize("On") : localizer.Localize("Off");
-                status = string.Format(localizer.Localize("Forced - {0}"), onOff);
+                status = string.Format(localizer.Localize("{0} (Forced)"), onOff);
             }
 
             DtrEntry.Text = new SeString(new TextPayload($"Inviter: {status}"));

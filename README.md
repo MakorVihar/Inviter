@@ -6,6 +6,16 @@ This is a fork of [Bluefissure/Inviter](https://github.com/Bluefissure/Inviter),
 
 ![Settings window](images/settings_window.jpg)
 
+## Install
+
+Add this repository's `repo.json` as a custom plugin repository in Dalamud: **Dalamud Settings → Experimental → Custom Plugin Repositories**:
+
+```
+https://raw.githubusercontent.com/MakorVihar/Inviter/main/repo.json
+```
+
+Then find "Inviter" under **Plugin Installer → All Plugins** and install it. See [PUBLISHING.md](PUBLISHING.md) if you're setting this repository up yourself.
+
 ## Features
 
 - Automatically invites players whose chat message matches a text pattern or regex you configure
@@ -13,8 +23,8 @@ This is a fork of [Bluefissure/Inviter](https://github.com/Bluefissure/Inviter),
 - Per-zone rules: override the pattern (and whether it's regex) for specific zones, or force auto-invite on/off in specific zones regardless of the main switch
 - A server info bar (DTR) entry showing the effective status for whatever zone you're currently in:
   - `On` / `Off` — following the main switch, no zone rule for this zone
-  - `Inherited - On` / `Inherited - Off` — this zone has a rule, but it's set to Inherit, so it's still following the main switch
-  - `Forced - On` / `Forced - Off` — this zone has a Force On/Off rule, overriding the main switch
+  - `On (Inherited)` / `Off (Inherited)` — this zone has a rule, but it's set to Inherit, so it's still following the main switch
+  - `On (Forced)` / `Off (Forced)` — this zone has a Force On/Off rule, overriding the main switch
   - `Timed (Xm)` — a timed session is running and currently in effect
   - **Left-click** the entry to toggle. In a Forced zone this flips the force state directly (Forced - On ↔ Forced - Off) without touching the main switch; everywhere else it toggles the main switch
   - **Right-click** the entry for a quick menu: turn on/off, start a timed session (with duration presets or a custom minutes/attempts input), cancel a running timed session, or open settings
@@ -65,13 +75,13 @@ A worked example, walking through every part of the config using one scenario: *
 
 ### 2. Filters
 
-Pick which chat channels are actually watched. For a hunt train you mostly care about **Shout** and **Yell** — leave channels like Free Company unchecked if you don't want messages from there triggering an invite too.
+Pick which chat channels are actually watched. For most zones you only care about **Shout**, **Yell** and **Say** — leave channels like Free Company unchecked if you don't want messages from there triggering an invite too.
 
 <!-- ![Channel filters](images/example-filters.png) -->
 
 ### 3. Per-zone rules ("...but for these Maps")
 
-Three example rows, each demonstrating a different column:
+Two example zones:
 
 | Mode | Zone | Pattern override | Regex | Why |
 |---|---|---|---|---|
@@ -87,8 +97,8 @@ Add a row with **Add Current Zone** while standing in the relevant zone, or find
 With the setup above, walking around shows different DTR text depending on where you are:
 
 - Most zones (no rule, main switch off): **`Inviter: Off`**
-- The hunt train zone (`Force On`): **`Inviter: Forced - On`** — left-clicking here toggles it to `Forced - Off` without touching the main switch
-- North Horn (`Inherit` + pattern override): **`Inviter: Inherited - On`**, same as the main switch since Inherit still follows this — left-clicking here toggles it to **`Inviter: Inherited - Off`**, turning off the main switch.
+- The hunt train zone (`Force On`): **`Inviter: On (Forced)`** — left-clicking here toggles it to `Off (Forced)` without touching the main switch
+- North Horn (`Inherit` + pattern override): **`Inviter: On (Inherited)`**, same as the main switch since Inherit still follows this — left-clicking here toggles it to **`Inviter: Off (Inherited)`**, turning off the main switch.
 - If you right-click anywhere and start a timed session, that zone shows **`Inviter: Timed (Xm)`** instead, counting down
 
 <!-- ![DTR bar states](images/example-dtr-states.png) -->
@@ -101,16 +111,6 @@ With the setup above, walking around shows different DTR text depending on where
 | `\binv\b` | on | "inv" as a standalone word | "invalid", "convince", "investment" — false positives from the plain substring version above |
 | `\b(inv\|lfg)\b` | on | "inv" or "lfg" as standalone words | "invalid", "lfgroup" |
 | `^(?!.*tower).*lfg.*$` | on | any message containing "lfg", as long as it doesn't also contain "tower" | "lfg ce", but not "lfg tower" |
-
-## Install
-
-Add this repository's `repo.json` as a custom plugin repository in Dalamud: **Dalamud Settings → Experimental → Custom Plugin Repositories**:
-
-```
-https://raw.githubusercontent.com/MakorVihar/Inviter/main/repo.json
-```
-
-Then find "Inviter" under **Plugin Installer → All Plugins** and install it. See [PUBLISHING.md](PUBLISHING.md) if you're setting this repository up yourself.
 
 ## Credits
 

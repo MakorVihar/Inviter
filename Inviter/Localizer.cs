@@ -144,8 +144,8 @@ namespace Inviter
             // DTR bar status text and quick menu
             zh.Add("On", "开启");
             zh.Add("Off", "关闭");
-            zh.Add("Inherited - {0}", "继承 - {0}");
-            zh.Add("Forced - {0}", "强制 - {0}");
+            zh.Add("{0} (Inherited)", "{0} (继承)");
+            zh.Add("{0} (Forced)", "{0} (强制)");
             zh.Add("Timed ({0}m)", "限时（{0}分钟）");
             zh.Add("Left-click: toggle. Right-click: menu.", "左键点击：切换。右键点击：菜单。");
             zh.Add("Turn On", "开启");
@@ -290,8 +290,8 @@ namespace Inviter
             // DTR bar status text and quick menu
             fr.Add("On", "Activé");
             fr.Add("Off", "Désactivé");
-            fr.Add("Inherited - {0}", "Hérité - {0}");
-            fr.Add("Forced - {0}", "Forcé - {0}");
+            fr.Add("{0} (Inherited)", "{0} (Hérité)");
+            fr.Add("{0} (Forced)", "{0} (Forcé)");
             fr.Add("Timed ({0}m)", "Minuté ({0}m)");
             fr.Add("Left-click: toggle. Right-click: menu.", "Clic gauche : basculer. Clic droit : menu.");
             fr.Add("Turn On", "Activer");
