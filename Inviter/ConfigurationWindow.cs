@@ -429,7 +429,7 @@ namespace Inviter
 
             if (!string.IsNullOrWhiteSpace(_ruleTerritorySearch))
             {
-                ImGui.BeginChild("##ruleTerritorySearchResults", new Vector2(0, 150));
+                ImGui.BeginChild("##ruleTerritorySearchResults", new Vector2(0, -1));
                 foreach (var territory in Svc.Data.GetExcelSheet<TerritoryType>())
                 {
                     var name = territory.PlaceName.ValueNullable?.Name.ToString();

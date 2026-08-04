@@ -1,10 +1,11 @@
 # Inviter
+[![Workflow Status](https://github.com/MakorVihar/Inviter/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/MakorVihar/Inviter/actions/workflows/build.yml)
+![Dalamud SDK](https://img.shields.io/badge/Dalamud%20SDK-v15-7289da)
+![FFXIV Patch](https://img.shields.io/badge/FFXIV%20Patch-7.55-d97706)
 
 A [Dalamud](https://dalamud.dev) plugin that automatically invites players who say a matching phrase (default "inv") in chat to your party.
 
 This is a fork of [Bluefissure/Inviter](https://github.com/Bluefissure/Inviter), updated to target the current Dalamud API and extended with a server info bar toggle, a right-click quick menu, channel filter shortcuts, and per-zone rules.
-
-![Settings window](images/settings_window.jpg)
 
 ## Install
 
@@ -14,7 +15,7 @@ Add this repository's `repo.json` as a custom plugin repository in Dalamud: **Da
 https://raw.githubusercontent.com/MakorVihar/Inviter/main/repo.json
 ```
 
-Then find "Inviter" under **Plugin Installer → All Plugins** and install it. See [PUBLISHING.md](PUBLISHING.md) if you're setting this repository up yourself.
+Then find "Inviter" under **Plugin Installer → All Plugins** and install it.
 
 ## Features
 
@@ -28,6 +29,12 @@ Then find "Inviter" under **Plugin Installer → All Plugins** and install it. S
   - `Timed (Xm)` — a timed session is running and currently in effect
   - **Left-click** the entry to toggle. In a Forced zone this flips the force state directly (Forced - On ↔ Forced - Off) without touching the main switch; everywhere else it toggles the main switch
   - **Right-click** the entry for a quick menu: turn on/off, start a timed session (with duration presets or a custom minutes/attempts input), cancel a running timed session, or open settings
+
+![General Settings](images/settings_window.jpg)
+![Channel Filters](images/channel_filters.jpg)
+
+![General Match](images/everywhere_settings.jpg)
+![Map Settings](images/map_settings.jpg)
 
 ![Server info bar entry](images/server_info_bar_entry.jpg)
 
@@ -71,13 +78,9 @@ A worked example, walking through every part of the config using one scenario: *
 - **Delay (ms)** — a randomized wait between the two values you set here, before actually sending the invite; e.g. `200` to `600` means each invite waits somewhere between 200ms and 600ms, not always the same amount.
 - **Rate limit (ms)** — how long to wait between invites, so as to not trigger a burst of invites.
 
-<!-- ![General settings](images/example-general-settings.png) -->
-
 ### 2. Filters
 
 Pick which chat channels are actually watched. For most zones you only care about **Shout**, **Yell** and **Say** — leave channels like Free Company unchecked if you don't want messages from there triggering an invite too.
-
-<!-- ![Channel filters](images/example-filters.png) -->
 
 ### 3. Per-zone rules ("...but for these Maps")
 
@@ -90,8 +93,6 @@ Two example zones:
 
 Add a row with **Add Current Zone** while standing in the relevant zone, or find one elsewhere with **Search zone name...**.
 
-<!-- ![Zone rules](images/example-zone-rules.png) -->
-
 ### 4. Server info bar, in this scenario
 
 With the setup above, walking around shows different DTR text depending on where you are:
@@ -100,8 +101,6 @@ With the setup above, walking around shows different DTR text depending on where
 - The hunt train zone (`Force On`): **`Inviter: On (Forced)`** — left-clicking here toggles it to `Off (Forced)` without touching the main switch
 - North Horn (`Inherit` + pattern override): **`Inviter: On (Inherited)`**, same as the main switch since Inherit still follows this — left-clicking here toggles it to **`Inviter: Off (Inherited)`**, turning off the main switch.
 - If you right-click anywhere and start a timed session, that zone shows **`Inviter: Timed (Xm)`** instead, counting down
-
-<!-- ![DTR bar states](images/example-dtr-states.png) -->
 
 ### Reference: pattern matching
 
