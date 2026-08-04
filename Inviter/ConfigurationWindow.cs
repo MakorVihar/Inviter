@@ -132,13 +132,6 @@ namespace Inviter
             if (ImGui.Combo("##hideLangSetting", ref _selectedLanguage, _languageList, _languageList.Length))
             {
                 Inviter.Plugin.Config.UILanguage = _languageList[_selectedLanguage];
-                if (Inviter.Plugin.Config.TextPattern == "111" || Inviter.Plugin.Config.TextPattern == "inv")
-                {
-                    if (Inviter.Plugin.Config.UILanguage == "zh")
-                        Inviter.Plugin.Config.TextPattern = "111";
-                    else
-                        Inviter.Plugin.Config.TextPattern = "inv";
-                }
                 Inviter.Plugin.localizer.Language = Inviter.Plugin.Config.UILanguage;
                 Inviter.Plugin.Config.Save();
             }

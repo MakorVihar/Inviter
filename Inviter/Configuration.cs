@@ -12,7 +12,7 @@ namespace Inviter
         public bool ShowTooltips = true;
         public bool ShowDtrEntry = true;
         public string UILanguage = "en";
-        public string TextPattern = "inv";
+        public string TextPattern = "";
         public bool RegexMatch = false;
         public bool PrintMessage = false;
         public bool PrintError = true;

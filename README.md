@@ -1,9 +1,9 @@
 # Inviter
 [![Workflow Status](https://github.com/MakorVihar/Inviter/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/MakorVihar/Inviter/actions/workflows/build.yml)
-![Dalamud SDK](https://img.shields.io/badge/Dalamud%20SDK-v15-7289da)
+![Dalamud SDK](https://img.shields.io/badge/Dalamud%20SDK-v15.0.0-7289da)
 ![FFXIV Patch](https://img.shields.io/badge/FFXIV%20Patch-7.55-d97706)
 
-A [Dalamud](https://dalamud.dev) plugin that automatically invites players who say a matching phrase (default "inv") in chat to your party.
+A [Dalamud](https://dalamud.dev) plugin that automatically invites players who say a matching phrase in chat to your party.
 
 This is a fork of [Bluefissure/Inviter](https://github.com/Bluefissure/Inviter), updated to target the current Dalamud API and extended with a server info bar toggle, a right-click quick menu, channel filter shortcuts, and per-zone rules.
 
@@ -74,7 +74,7 @@ A worked example, walking through every part of the config using one scenario: *
 - **Enable** — set this **on** in our example.
 - **Tooltips** — on, just for convenience while configuring.
 - **Server Info Bar** — on, so the DTR entry shows current status (see section 4).
-- **Pattern** — cleared to empty for this walkthrough, **Regex** off. The shipped default is actually `inv`; we're blanking it here on purpose so nothing matches globally, and only the zone overrides below (which each set their own pattern) do anything. An empty pattern never matches anything.
+- **Pattern** — leave empty for this walkthrough, **Regex** off. We're leaving it blank on purpose here so nothing matches globally, and only the zone overrides below (which each set their own pattern) do anything. An empty pattern never matches anything.
 - **Delay (ms)** — a randomized wait between the two values you set here, before actually sending the invite; e.g. `200` to `600` means each invite waits somewhere between 200ms and 600ms, not always the same amount.
 - **Rate limit (ms)** — how long to wait between invites, so as to not trigger a burst of invites.
 
@@ -89,7 +89,7 @@ Two example zones:
 | Mode | Zone | Pattern override | Regex | Why |
 |---|---|---|---|---|
 | `Force On` | (the hunt train zone) | `inv` | off | Auto-invite runs here regardless of whether the main switch above is on or off |
-| `Inherit` | North Horn | `^(?!.*tower).*lfg.*$` | on | Follows the main switch like normal, but uses this zone's own pattern instead of the global `inv` — here, "lfg" is used for two groups in that zone, and this excludes one of them. |
+| `Inherit` | North Horn | `^(?!.*tower).*lfg.*$` | on | Follows the main switch like normal, but uses this zone's own pattern instead of the (empty) global one — here, "lfg" is used for two groups in that zone, and this excludes one of them. |
 
 Add a row with **Add Current Zone** while standing in the relevant zone, or find one elsewhere with **Search zone name...**.
 
