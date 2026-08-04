@@ -298,7 +298,7 @@ namespace Inviter
             if (string.IsNullOrWhiteSpace(Inviter.Plugin.Config.TextPattern))
             {
                 ImGui.TextColored(new Vector4(1f, 0.55f, 0.2f, 1f),
-                    Inviter.Plugin.localizer.Localize("Pattern is empty — Inviter will not match any messages until you enter one."));
+                    Inviter.Plugin.localizer.Localize("Pattern is empty — Unless overridden for a zone, inviter will not match any messages until you enter one."));
             }
         }
 

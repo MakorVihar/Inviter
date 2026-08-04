@@ -124,7 +124,7 @@ namespace Inviter
             zh.Add("Everywhere...", "所有地方……");
             zh.Add("...but for these Maps", "……但这些地图除外");
             zh.Add("The default pattern used everywhere, unless a zone under \"...but for these Maps\" overrides it.", "在所有地方使用的默认模式，除非在“……但这些地图除外”中为该区域设置了覆盖。");
-            zh.Add("Pattern is empty — Unless overridden for a map, inviter will not match any messages until you enter one.", "模式为空 — 在您输入内容之前，Inviter 不会匹配任何消息（除非某个地图设置了独立覆盖）。");
+            zh.Add("Pattern is empty — Unless overridden for a zone, inviter will not match any messages until you enter one.", "模式为空 — 在您输入内容之前，Inviter 不会匹配任何消息（除非某个地图设置了独立覆盖）。");
             zh.Add(
                 "Zones listed here override \"Everywhere...\". Inherit only overrides the Pattern (and whether it's " +
                 "regex) if you check its box below; Force On/Off override the main Enable switch for that zone specifically.",
@@ -270,7 +270,7 @@ namespace Inviter
             fr.Add("Everywhere...", "Partout...");
             fr.Add("...but for these Maps", "...mais pour ces zones");
             fr.Add("The default pattern used everywhere, unless a zone under \"...but for these Maps\" overrides it.", "Le pattern par défaut utilisé partout, sauf si une zone sous « ...mais pour ces zones » le remplace.");
-            zh.Add("Pattern is empty — Unless overridden for a zone, inviter will not match any messages until you enter one.", "模式为空 — 在您输入内容之前，Inviter 不会匹配任何消息（除非某个区域设置了独立覆盖）。");
+            fr.Add("Pattern is empty — Unless overridden for a zone, inviter will not match any messages until you enter one.", "Le pattern est vide — Sauf s'il est remplacé pour une zone, Inviter ne correspondra à aucun message tant que vous n'en aurez pas saisi un.");
             fr.Add(
                 "Zones listed here override \"Everywhere...\". Inherit only overrides the Pattern (and whether it's " +
                 "regex) if you check its box below; Force On/Off override the main Enable switch for that zone specifically.",
